@@ -1,10 +1,12 @@
 import React, {useState} from "react";
 
+/*function for a sting input -- maybe interface with the API here. */
+
 function SearchBar(){
 
     return(
         <div>
-            <input type='text' placeholder="search spotify"> </input>
+            <input type='text' placeholder="search spotify"/> 
             <h1>Testing pipeline</h1>
         </div>
     )
