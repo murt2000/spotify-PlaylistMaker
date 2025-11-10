@@ -7,7 +7,7 @@ function SearchBar(){
     return(
         <div>
             <input type='text' placeholder="search spotify"/> 
-            <h1>Testing pipeline</h1>
+
         </div>
     )
 }

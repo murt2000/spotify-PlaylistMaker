@@ -1,8 +1,15 @@
 import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
+
+
 import SearchBar from './components/SearchBar.jsx'
 import Header from './components/Header.jsx'
+import SearchResults from './components/SearchResults.jsx'
+import Playlist from './components/Playlist.jsx'
+import Track from './components/Track.jsx'
+import Tracklist from './components/Tracklist.jsx'
+
 import './App.css'
 
 /*
@@ -37,6 +44,7 @@ function App() {
       <div>
         <Header/>
         <SearchBar/>
+        
       </div>
     </>
   )
