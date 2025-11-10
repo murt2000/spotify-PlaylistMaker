@@ -7,8 +7,7 @@ import SearchBar from './components/SearchBar.jsx'
 import Header from './components/Header.jsx'
 import SearchResults from './components/SearchResults.jsx'
 import Playlist from './components/Playlist.jsx'
-import Track from './components/Track.jsx'
-import Tracklist from './components/Tracklist.jsx'
+import Playlist from './components/Playlist.jsx'
 
 import './App.css'
 
@@ -41,9 +40,11 @@ function App() {
 
   return (
     <>
-      <div>
+      <div id='app-grid'>
         <Header/>
         <SearchBar/>
+        <SearchResults/>
+        <Playlist/>
         
       </div>
     </>

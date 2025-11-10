@@ -4,7 +4,7 @@ function SearchResults(params) {
     
 
     return(
-        <div>
+        <div id='results'>
             <h2>Search results</h2>
         </div>
     )
