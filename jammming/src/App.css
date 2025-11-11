@@ -1,12 +1,49 @@
 #root {
  
+height: 100%;
 
+ 
+}
+#app-grid{
+  height: 100%;
   display: grid;
   grid-template-columns: 2fr 1fr;
   grid-template-rows:  auto auto 1fr;
+   grid-template-areas:
+    "header header"
+    "searchbar searchbar"
+    "results playlist";
+    
 }
 
 
-#header{
+#header {
+  grid-area: header;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+}
+
+#searchbar {
+  grid-area: searchbar;
+  place-items: center;
+
+  justify-content: center;
+}
+
+#results {
+  grid-area: results;
+  padding: 1rem;
+
+  
+}
+
+#playlist {
+  
+  grid-area: playlist;
+
+  padding: 1rem;
 
 }

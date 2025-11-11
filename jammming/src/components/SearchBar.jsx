@@ -5,7 +5,7 @@ import React, {useState} from "react";
 function SearchBar(){
 
     return(
-        <div>
+        <div id='searchbar'>
             <input type='text' placeholder="search spotify"/> 
 
         </div>

@@ -6,8 +6,9 @@ import viteLogo from '/vite.svg'
 import SearchBar from './components/SearchBar.jsx'
 import Header from './components/Header.jsx'
 import SearchResults from './components/SearchResults.jsx'
-import Playlist from './components/Playlist.jsx'
-import Playlist from './components/Playlist.jsx'
+import Playlists from './components/Playlists.jsx'
+
+
 
 import './App.css'
 
@@ -44,7 +45,7 @@ function App() {
         <Header/>
         <SearchBar/>
         <SearchResults/>
-        <Playlist/>
+        <Playlists/>
         
       </div>
     </>
