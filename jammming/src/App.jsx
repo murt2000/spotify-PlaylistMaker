@@ -45,6 +45,7 @@ function App() {
         <Header/>
         <SearchBar/>
         <SearchResults/>
+        
         <Playlists/>
         
       </div>
