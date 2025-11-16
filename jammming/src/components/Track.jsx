@@ -1,5 +1,6 @@
 import React, {useState} from "react";
 
+import './styleComponents/Track.css'
 
 
 /* contains the induvidual track or song objects that are used as a listitem in a tracklist whitch are a listitem of the playlists component*/ 
@@ -7,15 +8,19 @@ import React, {useState} from "react";
 function Track({ trackName, artistName, trackImg, isInPlaylist, addTrack, rmvTrack}) {
     
     return(
-        <div>
-            <h3>{trackName}</h3>
-            <h4>{artistName}</h4>
-            <img src={trackImg} alt={trackName} />
+        <div className="trackBox">
+            <div className="imgBox">
+              <img className="trackImg" src={trackImg} alt={trackName} />
+            </div>
+            <div className="trackText">
+            <h3 className="trackName">{trackName}</h3>
+            <h4 className="trackArtist">{artistName}</h4>
+            </div>
             {
             isInPlaylist ? 
             (
-            <button onClick={() => rmvTrack(trackName)}>-</button>
-            ):( <button onClick={() => addTrack(trackName)}>+</button>
+            <button className="trackButton" onClick={() => rmvTrack(trackName)}>-</button>
+            ):( <button className="trackButton" onClick={() => addTrack(trackName)}>+</button>
             )}
         </div>
     )

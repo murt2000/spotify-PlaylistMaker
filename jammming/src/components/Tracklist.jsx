@@ -8,7 +8,7 @@ function Tracklist({ tracks, isInPlaylist, addTrack, rmvTrack}) {
 
 
     return(
-        <div>{tracks.map(track => (
+        <div className="trackList">{tracks.map(track => (
             <Track
             key={track.id}
             trackName={track.name}

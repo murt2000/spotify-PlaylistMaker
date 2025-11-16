@@ -12,8 +12,8 @@ function Playlists() {
         expanded: true,
         editingName: false,
         tracks:[
-            {id: 101, name: 'What you know', artist: 'Two door cinema club', image:'cat.thing'},
-            {id: 102, name: 'chinatown Blues', artist:'ODDEEO, karmaWears White Tears', image:'sunset.png'}
+            {id: 101, name: 'What you know', artist: 'Two door cinema club', image:"../public/two-door-cinema-club_tourist-history_2010-596777.jpeg"},
+            {id: 102, name: 'chinatown Blues', artist:'ODDEEO, karmaWears White Tears', image:"../public/interludium-powerwolf-992x992-3374247939.jpg"}
         ]
         },
         {
@@ -81,7 +81,7 @@ function Playlists() {
 
 
             {tracklists.map(tl => (
-                <div key={tl.id}>
+                <div key={tl.id} className="plBox">
 
                     {!tl.editingName ? ( 
 
