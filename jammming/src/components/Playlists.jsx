@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Tracklist from "./Tracklist";
 import Track from "./Track";
 
+import './styleComponents/Playlist.css'
 /* should me makeing a list of tracklists containing tracks as well as a button up top to make additional tracklists */
 
 function Playlists() {
@@ -83,15 +84,21 @@ function Playlists() {
             {tracklists.map(tl => (
                 <div key={tl.id} className="plBox">
 
+                   
                     {!tl.editingName ? ( 
-
-                    <h3 
+                    <h3
+                        className="playlistHeader"
                         onClick={() => toggleTracklist(tl.id)}
                         onDoubleClick={() =>startEditing(tl.id)}
                         style={{cursor: "pointer", userSelect: 'none'}}    
                     >
-                        {tl.name}
-                    </h3>) :(
+                    <span className="arrow">
+                        {tl.expanded ? "▼" : "▶"}
+                    </span>
+                    {tl.name}
+                     </h3> 
+                    ) : ( 
+                        
                         <input
                         type='text'
                         autoFocus
@@ -103,7 +110,11 @@ function Playlists() {
                             }
                         }}
                         />
-                    )}   
+                    )}
+                   
+                   
+
+                      
 
                     {tl.expanded && (
 
