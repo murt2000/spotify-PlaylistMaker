@@ -1,12 +1,12 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useState, useEffect } from 'react'
+
 
 
 import SearchBar from './components/SearchBar.jsx'
 import Header from './components/Header.jsx'
 import SearchResults from './components/SearchResults.jsx'
 import Playlists from './components/Playlists.jsx'
+import LoginOverlay from './components/LoginOverlay.jsx'
 
 
 
@@ -37,20 +37,51 @@ footer should link to my Github page.
 
 function App() {
 
+  const [token, setToken] = useState(null); 
+
+  const CLIENT_ID ="005ca1c419964ede830a5ab4944221fe";
+  const REDIRECT_URL = "http://localhost:5173";
+  const SCOPES = "playlist-modify-private playlist-modify-public";
+  const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}` +
+    `&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}` +
+    `&scope=${encodeURIComponent(SCOPES)}`;
+
+    useEffect(() => {
+      const hash = window.location.hash;
+      if(hash.includes("access_token")){
+        const newtoken = hash
+        .split("&")
+        .find(param => param.startsWith("#access_token"))
+        .split("=")[1];
+
+        setToken(newtoken)
+        window.location.hash = "";
+      }
+    }, [])
+    function handleLogin() {
+      window.location.href= AUTH_URL;
+    }
+ 
+
+
+
 
 
   return (
     <>
+    {!token && <LoginOverlay onLogin={handleLogin}/>}
+    {token && (
       <div id='app-grid'>
         <Header/>
-        <SearchBar/>
-        <SearchResults/>
+        <SearchBar token={token}/>
+        <SearchResults token={token}/>
         
-        <Playlists/>
+        <Playlists token={token}/>
         
       </div>
+      ) }
     </>
-  )
+  );
 }
 
 export default App
