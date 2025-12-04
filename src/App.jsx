@@ -40,10 +40,10 @@ function App() {
   const [token, setToken] = useState(null); 
 
   const CLIENT_ID ="005ca1c419964ede830a5ab4944221fe";
-  const REDIRECT_URL = "https://murt2000.github.io/spotify-PlaylistMaker/";
+  const redirectUri = "https://murt2000.github.io/spotify-PlaylistMaker/index.html";
   const SCOPES = "playlist-modify-private playlist-modify-public";
   const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}` +
-    `&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URL)}` +
+    `&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}` +
     `&scope=${encodeURIComponent(SCOPES)}`;
 
     useEffect(() => {
