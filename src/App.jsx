@@ -48,24 +48,17 @@ function App() {
 
     useEffect(() => {
       const hash = window.location.hash;
-      if(hash.includes("access_token")){
-        const newtoken = hash
-        .split("&")
-        .find(param => param.startsWith("#access_token"))
-        .split("=")[1];
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get("access_token");
 
-        setToken(newtoken)
-        window.location.hash = "";
+      if(accessToken){
+       setToken(accessToken);
+       window.history.replaceState({}, document.title, window.location.pathname);
       }
     }, [])
     function handleLogin() {
       window.location.href= AUTH_URL;
     }
- 
-
-
-
-
 
   return (
     <>
