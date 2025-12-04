@@ -47,7 +47,7 @@ function App() {
     `&scope=${encodeURIComponent(SCOPES)}`;
 
     useEffect(() => {
-      const hash = window.location.hash;
+      const hash = window.location.hash.substrin(1);
       const params = new URLSearchParams(hash);
       const accessToken = params.get("access_token");
 
