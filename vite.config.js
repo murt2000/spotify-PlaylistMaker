@@ -6,5 +6,8 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   base: '/spotify-PlaylistMaker/',
+  build: {
+    outDir: 'docs',
+  },
   plugins: [react()]
 });
