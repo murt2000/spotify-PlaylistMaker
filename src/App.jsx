@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react'
 
-
-
 import SearchBar from './components/SearchBar.jsx'
 import Header from './components/Header.jsx'
+
 import SearchResults from './components/SearchResults.jsx'
+
 import Playlists from './components/Playlists.jsx'
 import LoginOverlay from './components/LoginOverlay.jsx'
-
-
 
 import './App.css'
 
@@ -40,8 +38,17 @@ function App() {
   const [token, setToken] = useState(null); 
 
   const CLIENT_ID ="005ca1c419964ede830a5ab4944221fe";
-  const redirectUri = "https://murt2000.github.io/spotify-PlaylistMaker/";
+  
   const SCOPES = "playlist-modify-private playlist-modify-public";
+
+  const isLocal =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+    
+    
+  const redirectUri = isLocal
+    ? "http://127.0.0.1:5173/spotify-PlaylistMaker/"
+    :  "https://murt2000.github.io/spotify-PlaylistMaker/";
 
   console.log("Token:", token);
   console.log("Client ID:", CLIENT_ID);
