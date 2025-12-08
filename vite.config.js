@@ -1,13 +1,11 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-
-// https://vite.dev/config/
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  base: '/spotify-PlaylistMaker/',
-  build: {
-    outDir: 'docs',
+  plugins: [react()],
+  base: "/spotify-PlaylistMaker/",
+  server: {
+    host: "127.0.0.1", // <-- important
+    port: 5173,        // <-- important
   },
-  plugins: [react()]
 });

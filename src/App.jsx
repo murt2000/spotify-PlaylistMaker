@@ -1,95 +1,191 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react";
 
-import SearchBar from './components/SearchBar.jsx'
-import Header from './components/Header.jsx'
+import SearchBar from "./components/SearchBar.jsx";
+import Header from "./components/Header.jsx";
+import SearchResults from "./components/SearchResults.jsx";
+import Playlists from "./components/Playlists.jsx";
+import LoginOverlay from "./components/LoginOverlay.jsx";
 
-import SearchResults from './components/SearchResults.jsx'
+import "./App.css";
 
-import Playlists from './components/Playlists.jsx'
-import LoginOverlay from './components/LoginOverlay.jsx'
+const CLIENT_ID = "005ca1c419964ede830a5ab4944221fe";
+const SCOPES = "playlist-modify-private playlist-modify-public";
 
-import './App.css'
+// --- PKCE helpers ------------------------------------------------------------
 
-/*
-App.JSX goals:
-imports all component and makes the application full
+function generateRandomString(length) {
+  const possible =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+  const values = crypto.getRandomValues(new Uint8Array(length));
+  return values.reduce(
+    (acc, x) => acc + possible.charAt(x % possible.length),
+    ""
+  );
+}
 
-Jamming project goals:
+async function sha256(input) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  return window.crypto.subtle.digest("SHA-256", data);
+}
 
-application should start with a header containing little except a WebSite name and light mode dark mode switch
-under the header in its own 'row' is the serch component for the search input
-the second 'row' contains the search results and the playlists
+function base64UrlEncode(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
 
-the search section should interface with the spotify API and show results from searching artist, songname, music genre or, and more if
-nothing is inputted in the search it should display a random songs in the top 10 000 to give inspiration. 
+async function createCodeChallenge(verifier) {
+  const digest = await sha256(verifier);
+  return base64UrlEncode(digest);
+}
 
-the plyalists section is the smaller part to the major of the serch results at the top you have create new playlist(tracklist) and
-that creates a new list that can be added to by searching for songs and adding them by click or drag. onclick you should be able to add
-a song to multiple tracklists.
-
-each tracklist should be expandable and colapsable and at the bottom of the tracklist should be the option to export the playlist
-to spotify or share it on social media
-
-footer should link to my Github page.
-*/
+// --- App ---------------------------------------------------------------------
 
 function App() {
-
-  const [token, setToken] = useState(null); 
-
-  const CLIENT_ID ="005ca1c419964ede830a5ab4944221fe";
-  
-  const SCOPES = "playlist-modify-private playlist-modify-public";
+  const [token, setToken] = useState(null);
+  console.log("App loaded, current token:", token);
 
   const isLocal =
     window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1";
-    
-    
+
   const redirectUri = isLocal
     ? "http://127.0.0.1:5173/spotify-PlaylistMaker/"
-    :  "https://murt2000.github.io/spotify-PlaylistMaker/";
+    : "https://murt2000.github.io/spotify-PlaylistMaker/";
 
-  console.log("Token:", token);
-  console.log("Client ID:", CLIENT_ID);
-  console.log("Redirect URI:", redirectUri);
+  console.log("Using redirect URI:", redirectUri);
 
+  // 1) Login: build authorize URL with PKCE, then redirect
+  async function handleLogin() {
+    console.log("Login button clicked");
 
-  const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}` +
-    `&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&scope=${encodeURIComponent(SCOPES)}`;
+    const codeVerifier = generateRandomString(128);
+    localStorage.setItem("spotify_code_verifier", codeVerifier);
 
+    const codeChallenge = await createCodeChallenge(codeVerifier);
 
-    console.log("Auth URL:", AUTH_URL);
-    useEffect(() => {
-      const hash = window.location.hash.substring(1);
-      const params = new URLSearchParams(hash);
-      const accessToken = params.get("access_token");
+    const params = new URLSearchParams({
+      response_type: "code", // PKCE uses code, not token
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      redirect_uri: redirectUri,
+      code_challenge_method: "S256",
+      code_challenge: codeChallenge,
+    });
 
-      if(accessToken){
-       setToken(accessToken);
-       window.history.replaceState({}, "", "/");
+    const authUrl =
+      "https://accounts.spotify.com/authorize?" + params.toString();
+    console.log("Auth URL on login attempt:", authUrl);
+
+    window.location.href = authUrl;
+  }
+
+  // 2) After redirect back: read ?code=..., exchange for access_token
+  useEffect(() => {
+    console.log("Location after load:", window.location.href);
+
+    async function handleCallback() {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      const error = url.searchParams.get("error");
+
+      console.log("Query code:", code);
+      console.log("Query error:", error);
+
+      // Already stored and valid token?
+      const storedToken = localStorage.getItem("spotify_access_token");
+      const storedExpiry = localStorage.getItem("spotify_token_expires_at");
+      if (storedToken && storedExpiry && Date.now() < Number(storedExpiry)) {
+        console.log("Using stored token from localStorage");
+        setToken(storedToken);
+        return;
       }
-    }, [])
-    function handleLogin() {
-      window.location.href= AUTH_URL;
+
+      if (error) {
+        console.error("Spotify auth error:", error);
+        return;
+      }
+
+      if (!code) {
+        console.log("No code in URL, user not logged in yet.");
+        return;
+      }
+
+      const codeVerifier = localStorage.getItem("spotify_code_verifier");
+      if (!codeVerifier) {
+        console.error("Missing code_verifier in localStorage");
+        return;
+      }
+
+      const body = new URLSearchParams({
+        client_id: CLIENT_ID,
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: redirectUri,
+        code_verifier: codeVerifier,
+      });
+
+      try {
+        const response = await fetch("https://accounts.spotify.com/api/token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: body.toString(),
+        });
+
+        if (!response.ok) {
+          const text = await response.text();
+          console.error("Token endpoint error:", response.status, text);
+          return;
+        }
+
+        const data = await response.json();
+        console.log("Token response:", data);
+
+        const accessToken = data.access_token;
+        const expiresIn = data.expires_in; // seconds
+        const expiresAt = Date.now() + expiresIn * 1000;
+
+        localStorage.setItem("spotify_access_token", accessToken);
+        localStorage.setItem(
+          "spotify_token_expires_at",
+          expiresAt.toString()
+        );
+
+        setToken(accessToken);
+
+        // Clean URL (remove ?code=...)
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, "", cleanUrl);
+      } catch (err) {
+        console.error("Error exchanging code for token:", err);
+      }
     }
+
+    handleCallback();
+  }, [redirectUri]);
 
   return (
     <>
-    {!token && <LoginOverlay onLogin={handleLogin}/>}
-    {token && (
-      <div id='app-grid'>
-        <Header/>
-        <SearchBar token={token}/>
-        <SearchResults token={token}/>
-        
-        <Playlists token={token}/>
-        
-      </div>
-      ) }
+      {!token && <LoginOverlay onLogin={handleLogin} />}
+      {token && (
+        <div id="app-grid">
+          <Header />
+          <SearchBar token={token} />
+          <SearchResults token={token} />
+          <Playlists token={token} />
+        </div>
+      )}
     </>
   );
 }
 
-export default App
+export default App;
