@@ -178,7 +178,7 @@ function App() {
       {!token && <LoginOverlay onLogin={handleLogin} />}
       {token && (
         <div id="app-grid">
-          <Header />
+          <Header token={token} />
           <SearchBar token={token} />
           <SearchResults token={token} />
           <Playlists token={token} />
