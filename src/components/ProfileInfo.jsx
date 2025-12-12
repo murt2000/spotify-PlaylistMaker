@@ -1,29 +1,34 @@
 import React from 'react';
 import { useEffect } from 'react';
 
-function ProfileInfo({token}) {
+function ProfileInfo({profileData, loadingProfile, profileError}) {
 
-    async function fetchProfileData() {
-        const response = await fetch('https://api.spotify.com/v1/me', {
-            method: 'GET',
-            headers: { Authorization: `Bearer ${token}` 
-        }});
-        
-        return await response.json();
-        
+    if(loadingProfile){
+        return <div>Loading profile...</div>;
     }
+    if(profileError){
+        return <div>Error loading profile: {profileError}</div>;
+    }
+    if (!profileData) {
+        return null;
+    }
+    
+    const avatarUrl = profileData.images?.[0]?.url;
+    return(
     <section>
-        <h1>
-            Profile Info
+       <div id="profileInfo">
+        <h1 id="displayName" className='pInfo'>
+            {profileData.dispay_name ?? "Spotify user"}
         </h1>
-        <ul>
-            <li>UserID : <span></span></li>
-            <li>email : <span></span></li>
-            <li>Spotify URI : <span></span></li>
-            <li>Link : <span></span></li>
-            <li>Profile Image : <span></span></li>
-        </ul>
-    </section>
+        <h1 id="email" className='pInfo'>
+            {profileData.email ?? "No email available"}
+            </h1>
+        <div id="profilePic">
+            <img src={avatarUrl} alt="no pImg" />
+            </div>
+       </div>
+
+    </section>);
 }
 
 export default ProfileInfo;

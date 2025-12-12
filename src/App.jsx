@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 
 import SearchBar from "./components/SearchBar.jsx";
 import Header from "./components/Header.jsx";
@@ -9,7 +9,7 @@ import LoginOverlay from "./components/LoginOverlay.jsx";
 import "./App.css";
 
 const CLIENT_ID = "005ca1c419964ede830a5ab4944221fe";
-const SCOPES = "playlist-modify-private playlist-modify-public";
+const SCOPES = "playlist-modify-private playlist-modify-public user-read-private user-read-email";
 
 // --- PKCE helpers ------------------------------------------------------------
 
@@ -50,6 +50,9 @@ async function createCodeChallenge(verifier) {
 
 function App() {
   const [token, setToken] = useState(null);
+  const [profileData, setProfileData] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [profileError, setProfileError] = useState(null);
   console.log("App loaded, current token:", token);
 
   const isLocal =
@@ -173,12 +176,63 @@ function App() {
     handleCallback();
   }, [redirectUri]);
 
+  // Fetch profile data logic here
+
+  useEffect(() => {
+    if (!token){
+     setProfileData(null);
+    return;
+  }
+
+    const controller = new AbortController();
+
+    (async () => {
+      try{
+        setLoadingProfile(true);
+        setProfileError(null);
+
+        const response = await fetch('https://api.spotify.com/v1/me', {
+          method: 'GET', // redundant, fetch uses GET by default keep for clarity
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Spotify /profildata failed: ${response.status}`);
+          }
+
+          const data = await response.json();
+          setProfileData(data);
+        
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Error fetching profile data:', err);
+          setProfileError(err.message);
+        }
+      } finally {
+        setLoadingProfile(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [token]);
+
+// might keep this function for future use
+  /*async function fetchProfileData() {
+        const response = await fetch('https://api.spotify.com/v1/me', {
+            method: 'GET',
+            headers: { Authorization: `Bearer ${token}` 
+        }});
+        
+        return await response.json();
+        
+    }
+*/
   return (
     <>
       {!token && <LoginOverlay onLogin={handleLogin} />}
       {token && (
         <div id="app-grid">
-          <Header token={token} />
+          <Header profileData={profileData} loadingProfile={loadingProfile} profileError={profileError} />
           <SearchBar token={token} />
           <SearchResults token={token} />
           <Playlists token={token} />
