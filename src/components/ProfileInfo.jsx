@@ -1,5 +1,6 @@
 import React from 'react';
 import { useEffect } from 'react';
+import "./styleComponents/ProfileInfo.css";
 
 function ProfileInfo({profileData, loadingProfile, profileError}) {
 
@@ -12,21 +13,29 @@ function ProfileInfo({profileData, loadingProfile, profileError}) {
     if (!profileData) {
         return null;
     }
-    
+    const inital = profileData.display_name?.[0] ?? profileData.id?.[0] ?? "?";
     const avatarUrl = profileData.images?.[0]?.url;
+    console.log("Profile data:", profileData);
+    console.log("Avatar URL:", avatarUrl);
+    
     return(
     <section>
+        
        <div id="profileInfo">
-        <h1 id="displayName" className='pInfo'>
-            {profileData.dispay_name ?? "Spotify user"}
-        </h1>
-        <h1 id="email" className='pInfo'>
+        <p id="displayName" className='pInfo'>
+            {profileData.display_name ?? "Spotify user"}
+        </p>
+        <p id="email" className='pInfo'>
             {profileData.email ?? "No email available"}
-            </h1>
+            </p>
+        </div>
         <div id="profilePic">
-            <img src={avatarUrl} alt="no pImg" />
-            </div>
-       </div>
+            {avatarUrl ? (
+                <img id="pic" src={avatarUrl} alt="?"/>)
+                 :
+                (<div id="avatarPH">{inital}</div>)}
+        </div>
+       
 
     </section>);
 }

@@ -151,7 +151,7 @@ function App() {
         }
 
         const data = await response.json();
-        console.log("Token response:", data);
+       
 
         const accessToken = data.access_token;
         const expiresIn = data.expires_in; // seconds
