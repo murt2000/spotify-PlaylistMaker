@@ -17,7 +17,9 @@ function Tracklist({ tracks, isInPlaylist, addTrack, rmvTrack}) {
             isInPlaylist={isInPlaylist}
             addTrack={addTrack}
             rmvTrack={rmvTrack}
-            />))}</div>
+            />))}
+         
+            </div>
     )
 }
 

@@ -50,9 +50,15 @@ async function createCodeChallenge(verifier) {
 
 function App() {
   const [token, setToken] = useState(null);
+
   const [profileData, setProfileData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [profileError, setProfileError] = useState(null);
+
+  const[playlists, setPlaylists] = useState([]);
+  const[loadingPlaylists, setLoadingPlaylists] = useState(false);
+  const[playlistsError, setPlaylistsError] = useState(null);
+
   console.log("App loaded, current token:", token);
 
   const isLocal =
@@ -216,17 +222,88 @@ function App() {
     return () => controller.abort();
   }, [token]);
 
-// might keep this function for future use
-  /*async function fetchProfileData() {
-        const response = await fetch('https://api.spotify.com/v1/me', {
-            method: 'GET',
-            headers: { Authorization: `Bearer ${token}` 
-        }});
-        
-        return await response.json();
-        
+// Playlists fetching logic is here
+ useEffect(() => {
+    if(!token){
+      setPlaylists([]);
+      return;
     }
-*/
+
+    const controller = new AbortController();
+
+    (async () => {
+
+      try {setLoadingPlaylists(true);
+      setPlaylistsError(null);
+
+      const res = await fetch ('https://api.spotify.com/v1/me/playlists', {
+        headers: { Authorization: `Bearer ${token}`},
+        signal: controller.signal,
+      });
+      if (!res.ok){
+        throw new Error('spotify fetch playlists failed' + res.status);
+      }
+      const data = await res.json();
+      const mapped = data.items.map(tl =>({ // tl is for tracklist it is a playlist, but named tracklist in app to avoid confusion
+        id: tl.id, 
+        name: tl.name,
+        image: tl.images[0]?.url ?? "",
+        isOwnedbyMe: tl.owner?.id === profileData?.id,
+        source: "spotify", // for imported playlist always spotify for created local
+        tracks: [],
+        tracksTotal: tl.tracks.total ?? 0,
+        loaded: false,
+        nexrTrackURL: null 
+      }))
+      setPlaylists(mapped);
+      }
+      catch (err){
+        if (err.name !== 'AbortError'){
+          console.error('Error fetching playlists:', err);
+          setPlaylistsError(err.message);
+        }
+      }
+      finally {setLoadingPlaylists(false);} 
+    })();
+    return () => controller.abort(); 
+ }, [token]);
+
+   function toggleTracklist(id) {
+    // modify to close others when one is opened and to fetch tracks if not loaded yet 
+    setTracklists(prev =>
+            prev.map(tl =>
+                tl.id === id
+                ? {...tl, expanded: !tl.expanded}
+                : {...tl, expanded: false }
+            )
+
+        );
+
+    }
+
+  function addTracklist() { //needs more logic and maybe properties spotify URI id etc 
+    const newList = {
+      id: Date.now(),
+      name: `new Tracklist ${tracklists.length + 1}`,
+      expanded: true,
+      editingName: false,
+      tracks: [],
+      source: "local",
+      spotifyPlaylistId: null,
+      loaded: false,
+      isOwnedbyMe: false // false since that will invoke export for a new playlist instead of trying to change it on spotify
+    };
+    setTracklists(prev =>
+      prev.map(tl => ({...tl, expanded: false })).concat(newList)
+    )
+    }
+  function removeTracklist(id) {
+    setTracklists(prev => prev.filter(tl => tl.id !== id));
+  }
+  function changename(){    // gets an id and new name from playlist component and changes it in state
+
+  } 
+
   return (
     <>
       {!token && <LoginOverlay onLogin={handleLogin} />}
@@ -235,7 +312,7 @@ function App() {
           <Header profileData={profileData} loadingProfile={loadingProfile} profileError={profileError} />
           <SearchBar token={token} />
           <SearchResults token={token} />
-          <Playlists token={token} />
+          <Playlists playlists={playlists} loadingPlaylists={loadingPlaylists} playlistsError={playlistsError} />
         </div>
       )}
     </>

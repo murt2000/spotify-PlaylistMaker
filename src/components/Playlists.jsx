@@ -3,60 +3,28 @@ import Tracklist from "./Tracklist";
 import Track from "./Track";
 
 import './styleComponents/Playlist.css'
-/* should me makeing a list of tracklists containing tracks as well as a button up top to make additional tracklists */
+/* 
+import playlist meta data in App.jsx and display user's playlists
+when expanded fetch tracks for that playlist from spotify api and display them using tracklist component, store those tracks in state and keep them
+so you don't have to fetch them again when collapsing/expanding
+able to add new playlists
+able to rename playlists
+able to expand/collapse playlists to show/hide tracks
+disable renaming playlists that were imported from spotify
+export button clicks gives a pop up with options export import on export reload website 
+*/
 
-function Playlists() {
+function Playlists({playlists, loadingPlaylists, playlistsError}) {
 
-    const [tracklists, setTracklists] = useState([
-        {id: 1,
-        name: 'repeat',
-        expanded: true,
-        editingName: false,
-        tracks:[
-            {id: 101, name: 'What you know', artist: 'Two door cinema club', image:"../public/two-door-cinema-club_tourist-history_2010-596777.jpeg"},
-            {id: 102, name: 'chinatown Blues', artist:'ODDEEO, karmaWears White Tears', image:"../public/interludium-powerwolf-992x992-3374247939.jpg"}
-        ]
-        },
-        {
-            id:2,
-            name: 'metal',
-            expanded: false,
-            editingName: false,
-            tracks:[
-                { id:201, name:'Son of a wolf', artist:'Powerwolf', image: 'wolf-bishop.png' },
-                {id:202, name: 'Army of the Night', artist:'Powerwolf', image: 'wolf-pagan.png'}
-            ]
-        }
-
-    ])
-
-    function toggleTracklist(id) {
-        setTracklists(prev =>
-            prev.map(tl =>
-                tl.id === id
-                ? {...tl, expanded: !tl.expanded}
-                : {...tl, expanded: false }
-            )
-
-        );
-
+    if (loadingPlaylists) {
+        return <div>Loading playlists...</div>;
+    }
+    if (playlistsError) {
+        return <div>Error loading playlists: {playlistsError.message}</div>;
     }
 
-    function addTracklist() {
-        const newList = {
-            id: Date.now(),
-            name: `new Tracklist ${tracklists.length + 1}`,
-            expanded: true,
-            editingName: false,
-            tracks: []
-        };
-        setTracklists(prev =>
-            prev.map(tl => ({...tl, expanded: false })).concat(newList)
-        )
-        
-    }
-
-    function startEditing(id) {
+    // we keep names and editing here as it does not come from spotify api
+   /* function startEditing(id) {
         setTracklists(prev =>
             prev.map(tl =>
                 tl.id === id
@@ -74,24 +42,32 @@ function Playlists() {
                 : tl
             )
         )
+    }*/
+
+    function saveName(id, newName){
+        // placeholder function
+        console.log(`Saving name ${newName} for playlist with id ${id}`);
     }
+    console.log("playlists:", playlists);
+console.log("first playlist:", playlists?.[0]);
     return(
         <div id='Playlists'>
             <h2>Your playlists</h2>
-            <button onClick={addTracklist}>+</button>
+            <button>+</button>
 
 
-            {tracklists.map(tl => (
+            {playlists.map(tl => (
                 <div key={tl.id} className="plBox">
 
                    
                     {!tl.editingName ? ( 
                     <h3
                         className="playlistHeader"
-                        onClick={() => toggleTracklist(tl.id)}
-                        onDoubleClick={() =>startEditing(tl.id)}
+                        //onClick={() => toggleTracklist(tl.id)}
+                        //onDoubleClick={() =>startEditing(tl.id)}
                         style={{cursor: "pointer", userSelect: 'none'}}    
                     >
+                        
                     <span className="arrow">
                         {tl.expanded ? "▼" : "▶"}
                     </span>
@@ -117,14 +93,17 @@ function Playlists() {
                       
 
                     {tl.expanded && (
-
+                        <div className="tracklistContainer">    
                         <Tracklist
-                tracks={tl.tracks}
-                isInPlaylist={true}
-                addTrack={(name) => console.log(`adding ${name}`)}
-                rmvTrack={(name) => console.log(`removeing ${name}`)}
-                />
+                            tracks={[]}
+                            isInPlaylist={true}
+                            addTrack={(name) => console.log(`adding ${name}`)}
+                            rmvTrack={(name) => console.log(`removeing ${name}`)}
+                        />
+                    <button id="export">Export</button>
+                    </div>
             )}
+            
             </div>
             ))}
         </div>
