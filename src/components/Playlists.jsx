@@ -14,8 +14,12 @@ disable renaming playlists that were imported from spotify
 export button clicks gives a pop up with options export import on export reload website 
 */
 
-function Playlists({playlists, loadingPlaylists, playlistsError}) {
 
+
+
+function Playlists({playlists, loadingPlaylists, playlistsError, onToggleTracklist, expandedPlaylistId}) {
+
+    
     if (loadingPlaylists) {
         return <div>Loading playlists...</div>;
     }
@@ -48,6 +52,8 @@ function Playlists({playlists, loadingPlaylists, playlistsError}) {
         // placeholder function
         console.log(`Saving name ${newName} for playlist with id ${id}`);
     }
+
+
     console.log("playlists:", playlists);
 console.log("first playlist:", playlists?.[0]);
     return(
@@ -56,56 +62,30 @@ console.log("first playlist:", playlists?.[0]);
             <button>+</button>
 
 
-            {playlists.map(tl => (
-                <div key={tl.id} className="plBox">
+            {playlists.map(pl => {
+  const isExpanded = expandedPlaylistId === pl.id;
 
-                   
-                    {!tl.editingName ? ( 
-                    <h3
-                        className="playlistHeader"
-                        //onClick={() => toggleTracklist(tl.id)}
-                        //onDoubleClick={() =>startEditing(tl.id)}
-                        style={{cursor: "pointer", userSelect: 'none'}}    
-                    >
-                        
-                    <span className="arrow">
-                        {tl.expanded ? "▼" : "▶"}
-                    </span>
-                    {tl.name}
-                     </h3> 
-                    ) : ( 
-                        
-                        <input
-                        type='text'
-                        autoFocus
-                        defaultValue={tl.name}
-                        onBlur={(e) => saveName(tl.id, e.target.value)}
-                        onKeyDown={(e) => {
-                            if(e.key === 'Enter'){
-                                saveName(tl.id, e.target.value)
-                            }
-                        }}
-                        />
-                    )}
-                   
-                   
+  return (
+    <div key={pl.id} className="plBox">
+      <h3
+        className="playlistHeader"
+        onClick={() => onToggleTracklist(pl.id)}
+        style={{ cursor: "pointer", userSelect: "none" }}
+      >
+        <span className="arrow">{isExpanded ? "▼" : "▶"}</span>
+        {pl.name}
+      </h3>
 
-                      
+      {isExpanded && (
+        <div className="tracklistContainer">
+          <Tracklist tracks={[]} isInPlaylist={true} addTrack={() => {}} rmvTrack={() => {}} />
+          <button id="export">Export</button>
+        </div>
+      )}
+    </div>
+  );
+})}
 
-                    {tl.expanded && (
-                        <div className="tracklistContainer">    
-                        <Tracklist
-                            tracks={[]}
-                            isInPlaylist={true}
-                            addTrack={(name) => console.log(`adding ${name}`)}
-                            rmvTrack={(name) => console.log(`removeing ${name}`)}
-                        />
-                    <button id="export">Export</button>
-                    </div>
-            )}
-            
-            </div>
-            ))}
         </div>
     );
 }

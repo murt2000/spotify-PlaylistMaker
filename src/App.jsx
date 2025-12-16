@@ -59,6 +59,8 @@ function App() {
   const[loadingPlaylists, setLoadingPlaylists] = useState(false);
   const[playlistsError, setPlaylistsError] = useState(null);
 
+  const[expandedPlaylistId, setExpandedPlaylistId] = useState(null);
+
   console.log("App loaded, current token:", token);
 
   const isLocal =
@@ -268,19 +270,20 @@ function App() {
     return () => controller.abort(); 
  }, [token]);
 
+
+ 
    function toggleTracklist(id) {
     // modify to close others when one is opened and to fetch tracks if not loaded yet 
-    setTracklists(prev =>
-            prev.map(tl =>
-                tl.id === id
-                ? {...tl, expanded: !tl.expanded}
-                : {...tl, expanded: false }
-            )
-
-        );
-
+    setExpandedPlaylistId(prev => 
+      prev === id ? null : id
+    );
+    console.log('click registered')
+      fetchTracks(id)
     }
 
+    function fetchTracks(id){
+      console.log("fetchTracks fired")
+    }
   function addTracklist() { //needs more logic and maybe properties spotify URI id etc 
     const newList = {
       id: Date.now(),
@@ -312,7 +315,7 @@ function App() {
           <Header profileData={profileData} loadingProfile={loadingProfile} profileError={profileError} />
           <SearchBar token={token} />
           <SearchResults token={token} />
-          <Playlists playlists={playlists} loadingPlaylists={loadingPlaylists} playlistsError={playlistsError} />
+          <Playlists playlists={playlists} loadingPlaylists={loadingPlaylists} playlistsError={playlistsError} onToggleTracklist={toggleTracklist} expandedPlaylistId={expandedPlaylistId} />
         </div>
       )}
     </>
