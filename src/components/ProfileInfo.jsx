@@ -2,12 +2,12 @@ import React from 'react';
 import { useEffect } from 'react';
 import "./styleComponents/ProfileInfo.css";
 
-function ProfileInfo({profileData, loadingProfile, profileError}) {
+function ProfileInfo({ profileData, loadingProfile, profileError }) {
 
-    if(loadingProfile){
+    if (loadingProfile) {
         return <div>Loading profile...</div>;
     }
-    if(profileError){
+    if (profileError) {
         return <div>Error loading profile: {profileError}</div>;
     }
     if (!profileData) {
@@ -17,27 +17,27 @@ function ProfileInfo({profileData, loadingProfile, profileError}) {
     const avatarUrl = profileData.images?.[0]?.url;
     console.log("Profile data:", profileData);
     console.log("Avatar URL:", avatarUrl);
-    
-    return(
-    <section>
-        
-       <div id="profileInfo">
-        <p id="displayName" className='pInfo'>
-            {profileData.display_name ?? "Spotify user"}
-        </p>
-        <p id="email" className='pInfo'>
-            {profileData.email ?? "No email available"}
-            </p>
-        </div>
-        <div id="profilePic">
-            {avatarUrl ? (
-                <img id="pic" src={avatarUrl} alt="?"/>)
-                 :
-                (<div id="avatarPH">{inital}</div>)}
-        </div>
-       
 
-    </section>);
+    return (
+        <section>
+
+            <div id="profileInfo">
+                <p id="displayName" className='pInfo'>
+                    {profileData.display_name ?? "Spotify user"}
+                </p>
+                <p id="email" className='pInfo'>
+                    {profileData.email ?? "No email available"}
+                </p>
+            </div>
+            <div id="profilePic">
+                {avatarUrl ? (
+                    <img id="pic" src={avatarUrl} alt="?" />)
+                    :
+                    (<div id="avatarPH">{inital}</div>)}
+            </div>
+
+
+        </section>);
 }
 
 export default ProfileInfo;

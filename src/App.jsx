@@ -1,4 +1,4 @@
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 
 import SearchBar from "./components/SearchBar.jsx";
 import Header from "./components/Header.jsx";
@@ -55,13 +55,12 @@ function App() {
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [profileError, setProfileError] = useState(null);
 
-  const[playlists, setPlaylists] = useState([]);
-  const[loadingPlaylists, setLoadingPlaylists] = useState(false);
-  const[playlistsError, setPlaylistsError] = useState(null);
+  const [playlists, setPlaylists] = useState([]);
+  const [loadingPlaylists, setLoadingPlaylists] = useState(false);
+  const [playlistsError, setPlaylistsError] = useState(null);
 
-  const[expandedPlaylistId, setExpandedPlaylistId] = useState(null);
+  const [expandedPlaylistId, setExpandedPlaylistId] = useState(null);
 
-  console.log("App loaded, current token:", token);
 
   const isLocal =
     window.location.hostname === "localhost" ||
@@ -71,11 +70,11 @@ function App() {
     ? "http://127.0.0.1:5173/spotify-PlaylistMaker/"
     : "https://murt2000.github.io/spotify-PlaylistMaker/";
 
-  console.log("Using redirect URI:", redirectUri);
+
 
   // 1) Login: build authorize URL with PKCE, then redirect
   async function handleLogin() {
-    console.log("Login button clicked");
+
 
     const codeVerifier = generateRandomString(128);
     localStorage.setItem("spotify_code_verifier", codeVerifier);
@@ -93,14 +92,14 @@ function App() {
 
     const authUrl =
       "https://accounts.spotify.com/authorize?" + params.toString();
-    console.log("Auth URL on login attempt:", authUrl);
+
 
     window.location.href = authUrl;
   }
 
   // 2) After redirect back: read ?code=..., exchange for access_token
   useEffect(() => {
-    console.log("Location after load:", window.location.href);
+
 
     async function handleCallback() {
       const url = new URL(window.location.href);
@@ -159,7 +158,7 @@ function App() {
         }
 
         const data = await response.json();
-       
+
 
         const accessToken = data.access_token;
         const expiresIn = data.expires_in; // seconds
@@ -187,15 +186,15 @@ function App() {
   // Fetch profile data logic here
 
   useEffect(() => {
-    if (!token){
-     setProfileData(null);
-    return;
-  }
+    if (!token) {
+      setProfileData(null);
+      return;
+    }
 
     const controller = new AbortController();
 
     (async () => {
-      try{
+      try {
         setLoadingProfile(true);
         setProfileError(null);
 
@@ -207,11 +206,11 @@ function App() {
 
         if (!response.ok) {
           throw new Error(`Spotify /profildata failed: ${response.status}`);
-          }
+        }
 
-          const data = await response.json();
-          setProfileData(data);
-        
+        const data = await response.json();
+        setProfileData(data);
+
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.error('Error fetching profile data:', err);
@@ -224,9 +223,9 @@ function App() {
     return () => controller.abort();
   }, [token]);
 
-// Playlists fetching logic is here
- useEffect(() => {
-    if(!token){
+  // Playlists fetching logic is here
+  useEffect(() => {
+    if (!token) {
       setPlaylists([]);
       return;
     }
@@ -235,55 +234,142 @@ function App() {
 
     (async () => {
 
-      try {setLoadingPlaylists(true);
-      setPlaylistsError(null);
+      try {
+        setLoadingPlaylists(true);
+        setPlaylistsError(null);
 
-      const res = await fetch ('https://api.spotify.com/v1/me/playlists', {
-        headers: { Authorization: `Bearer ${token}`},
-        signal: controller.signal,
-      });
-      if (!res.ok){
-        throw new Error('spotify fetch playlists failed' + res.status);
+        const res = await fetch('https://api.spotify.com/v1/me/playlists', {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          throw new Error('spotify fetch playlists failed' + res.status);
+        }
+        const data = await res.json();
+        const mapped = data.items.map(tl => ({ // tl is for tracklist it is a playlist, but named tracklist in app to avoid confusion
+          id: tl.id,
+          name: tl.name,
+          image: tl.images?.[0]?.url ?? "",
+          isOwnedbyMe: tl.owner?.id === profileData?.id,
+          source: "spotify", // for imported playlist always spotify for created local
+          tracks: [],
+          tracksTotal: tl.tracks.total ?? 0,
+          loaded: false,
+          nextTracksUrl: null,
+        }))
+        setPlaylists(mapped);
       }
-      const data = await res.json();
-      const mapped = data.items.map(tl =>({ // tl is for tracklist it is a playlist, but named tracklist in app to avoid confusion
-        id: tl.id, 
-        name: tl.name,
-        image: tl.images[0]?.url ?? "",
-        isOwnedbyMe: tl.owner?.id === profileData?.id,
-        source: "spotify", // for imported playlist always spotify for created local
-        tracks: [],
-        tracksTotal: tl.tracks.total ?? 0,
-        loaded: false,
-        nexrTrackURL: null 
-      }))
-      setPlaylists(mapped);
-      }
-      catch (err){
-        if (err.name !== 'AbortError'){
+      catch (err) {
+        if (err.name !== 'AbortError') {
           console.error('Error fetching playlists:', err);
           setPlaylistsError(err.message);
         }
       }
-      finally {setLoadingPlaylists(false);} 
+      finally { setLoadingPlaylists(false); }
     })();
-    return () => controller.abort(); 
- }, [token]);
+    return () => controller.abort();
+  }, [token]);
 
 
- 
-   function toggleTracklist(id) {
+
+  function toggleTracklist(id) {
     // modify to close others when one is opened and to fetch tracks if not loaded yet 
-    setExpandedPlaylistId(prev => 
-      prev === id ? null : id
-    );
-    console.log('click registered')
-      fetchTracks(id)
-    }
+    setExpandedPlaylistId(prev => {
+      const isOpening = prev !== id;
+      if (isOpening) fetchTracksIfNeeded(id);
+      return isOpening ? id : null;
+    });
 
-    function fetchTracks(id){
-      console.log("fetchTracks fired")
+  }
+
+  function mapTracks(items = []) {
+    return items.map(i => i.track)
+      .filter(Boolean)
+      .map(t => ({
+        id: t.id ?? "",
+        uri: t.uri ?? "",
+        name: t.name ?? "",
+        artist: t.artists?.map(a => a.name).join(", ") ?? "",
+        image: t.album?.images?.[0].url ?? "",
+      }));
+  }
+
+  async function fetchTracksIfNeeded(id) {
+    console.log("fetchTracks fired")
+    const tl = playlists.find(p => p.id === id);
+    if (!tl || tl.loaded) return;
+
+    const controller = new AbortController();
+    try {
+      const res = await fetch(
+        `https://api.spotify.com/v1/playlists/${id}/tracks?limit=50`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        }
+      );
+      if (!res.ok) {
+        const errBody = await res.text();
+        throw new Error(`Spotify playlist tracks failed (${res.status})`);
+      }
+
+      const data = await res.json();
+
+      const newTracks = mapTracks(data.items);
+
+
+      setPlaylists(prev => prev.map(p => p.id === id ?
+        {
+          ...p,
+          tracks: newTracks,
+          loaded: data.next == null,
+          nextTracksUrl: data.next ?? null,
+          tracksTotal: data.total ?? p.tracksTotal ?? newTracks.length,
+        }
+        : p
+      )
+      );
     }
+    catch (err) {
+      if (err.name !== "AbortErrror") {
+        console.error("error fetching tracks", err)
+      }
+    }
+    finally {
+      console.log(playlists)
+
+    }
+  }
+  async function loadMore(id) {
+    const tl = playlists.find(p => p.id === id);
+    if (!tl.nextTracksUrl) return;
+
+    const url = tl.nextTracksUrl
+    console.log("Load more url", url);
+
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, });
+
+    if (!res.ok) {
+      const errBody = await res.text();
+      throw new Error(`load more failed (${res.status}): ${errBody}`);
+    }
+    const data = await res.json();
+
+    const newTracks = mapTracks(data.items);
+
+    setPlaylists(prev => prev.map(p => p.id === id ? {
+      ...p,
+      tracks: [...(p.tracks ?? []), ...newTracks],
+      nextTracksUrl: data.next ?? null,
+      tracksTotal: data.total ?? p.tracksTotal,
+      tracksLoaded: data.next == null,
+    }
+      : p
+    )
+    );
+
+  }
+
   function addTracklist() { //needs more logic and maybe properties spotify URI id etc 
     const newList = {
       id: Date.now(),
@@ -297,15 +383,21 @@ function App() {
       isOwnedbyMe: false // false since that will invoke export for a new playlist instead of trying to change it on spotify
     };
     setTracklists(prev =>
-      prev.map(tl => ({...tl, expanded: false })).concat(newList)
+      prev.map(tl => ({ ...tl, expanded: false })).concat(newList)
     )
-    }
+  }
   function removeTracklist(id) {
     setTracklists(prev => prev.filter(tl => tl.id !== id));
   }
-  function changename(){    // gets an id and new name from playlist component and changes it in state
+  function renameTracklist(id, newName) {    // gets an id and new name from playlist component and changes it in state
+    setPlaylists(prev => prev.map(pl =>
+      pl.id === id
+        ? { ...pl, name: newName }
+        : pl
+    )
+    );
+  }
 
-  } 
 
   return (
     <>
@@ -315,7 +407,15 @@ function App() {
           <Header profileData={profileData} loadingProfile={loadingProfile} profileError={profileError} />
           <SearchBar token={token} />
           <SearchResults token={token} />
-          <Playlists playlists={playlists} loadingPlaylists={loadingPlaylists} playlistsError={playlistsError} onToggleTracklist={toggleTracklist} expandedPlaylistId={expandedPlaylistId} />
+          <Playlists
+            playlists={playlists}
+            loadingPlaylists={loadingPlaylists}
+            playlistsError={playlistsError}
+            onToggleTracklist={toggleTracklist}
+            expandedPlaylistId={expandedPlaylistId}
+            renameTracklist={renameTracklist}
+            loadMore={loadMore}
+          />
         </div>
       )}
     </>

@@ -17,76 +17,111 @@ export button clicks gives a pop up with options export import on export reload 
 
 
 
-function Playlists({playlists, loadingPlaylists, playlistsError, onToggleTracklist, expandedPlaylistId}) {
+function Playlists({ playlists, loadingPlaylists, loadMore, playlistsError, onToggleTracklist, expandedPlaylistId, renameTracklist }) {
 
-    
-    if (loadingPlaylists) {
-        return <div>Loading playlists...</div>;
-    }
-    if (playlistsError) {
-        return <div>Error loading playlists: {playlistsError.message}</div>;
-    }
+  const [editingId, setEditingId] = useState(null);
+  if (loadingPlaylists) {
+    return <div>Loading playlists...</div>;
+  }
+  if (playlistsError) {
+    return <div>Error loading playlists: {playlistsError.message}</div>;
+  }
 
-    // we keep names and editing here as it does not come from spotify api
-   /* function startEditing(id) {
-        setTracklists(prev =>
-            prev.map(tl =>
-                tl.id === id
-                ? {...tl, editingName: true}
-                : tl
-            )
-        )
-        
-    }
-    function saveName(id, newName){
-        setTracklists(prev =>
-            prev.map(tl =>
-                tl.id === id
-                ?{...tl, name: newName, editingName: false}
-                : tl
-            )
-        )
-    }*/
+  // we keep names and editing here as it does not come from spotify api
+  /* function startEditing(id) {
+       setTracklists(prev =>
+           prev.map(tl =>
+               tl.id === id
+               ? {...tl, editingName: true}
+               : tl
+           )
+       )
+       
+   }
+   function saveName(id, newName){
+       setTracklists(prev =>
+           prev.map(tl =>
+               tl.id === id
+               ?{...tl, name: newName, editingName: false}
+               : tl
+           )
+       )
+   }*/
 
-    function saveName(id, newName){
-        // placeholder function
-        console.log(`Saving name ${newName} for playlist with id ${id}`);
-    }
-
-
-    console.log("playlists:", playlists);
-console.log("first playlist:", playlists?.[0]);
-    return(
-        <div id='Playlists'>
-            <h2>Your playlists</h2>
-            <button>+</button>
+  function saveName(id, newName) {
+    // placeholder function
+    console.log(`Saving name ${newName} for playlist with id ${id}`);
+  }
 
 
-            {playlists.map(pl => {
-  const isExpanded = expandedPlaylistId === pl.id;
-
+  console.log("playlists:", playlists);
+  console.log("first playlist:", playlists?.[0]);
   return (
-    <div key={pl.id} className="plBox">
-      <h3
-        className="playlistHeader"
-        onClick={() => onToggleTracklist(pl.id)}
-        style={{ cursor: "pointer", userSelect: "none" }}
-      >
-        <span className="arrow">{isExpanded ? "▼" : "▶"}</span>
-        {pl.name}
-      </h3>
+    <div id='Playlists'>
+      <h2>Your playlists</h2>
+      <button>+</button>
 
-      {isExpanded && (
-        <div className="tracklistContainer">
-          <Tracklist tracks={[]} isInPlaylist={true} addTrack={() => {}} rmvTrack={() => {}} />
-          <button id="export">Export</button>
-        </div>
-      )}
+
+      {playlists.map(tl => {
+        const isExpanded = expandedPlaylistId === tl.id;
+        const isEditing = editingId === tl.id;
+
+        return (
+          <div key={tl.id} className="plBox">
+            {!isEditing ? (
+              <div className="Pl-header">
+                <h3
+                  className="playlistHeader"
+                  onClick={() => onToggleTracklist(tl.id)}
+                  style={{ cursor: "pointer", userSelect: "none" }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    setEditingId(tl.id);
+                    console.log("double click fired")
+                  }}>
+                  <span className="arrow">{isExpanded ? "▼" : "▶"}</span>
+                  {tl.name}
+                </h3>
+                <button
+                  type="button"
+                  className="edt-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingId(tl.id);
+                    console.log("double click fired")
+                  }}>Edit Name</button>
+              </div>
+            ) : (
+              <input type="text" autoFocus defaultValue={tl.name}
+                onBlur={(e) => {
+                  renameTracklist(tl.id, e.target.value);
+                  setEditingId(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    renameTracklist(tl.id, e.target.value);
+                    setEditingId(null);
+                  }
+                  if (e.key === "Escape") {
+                    setEditingId(null);
+                  }
+                }}
+              />
+
+            )}
+            {isExpanded && (
+              <div className="tracklistContainer">
+                <Tracklist tracks={tl.tracks ?? []} isInPlaylist={true} addTrack={() => { }} rmvTrack={() => { }} />
+                <button id="export">Export</button>
+                <button id="load" onClick={() => loadMore(tl.id)}>Load</button>
+              </div>
+            )}
+          </div>
+        );
+      }
+      )
+      }
     </div>
   );
-})}
-
-        </div>
-    );
 }
 export default Playlists;
