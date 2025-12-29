@@ -60,8 +60,12 @@ function App() {
   const [playlistsError, setPlaylistsError] = useState(null);
 
   const [expandedPlaylistId, setExpandedPlaylistId] = useState(null);
+
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [searchResults, setSearchResults] = useState([]);
+  const [loadingSearch, setLoadingSearch] = useState(false);
+  const [searchError, setSearchError] = useState(null);
 
   const isLocal =
     window.location.hostname === "localhost" ||
@@ -405,21 +409,19 @@ function App() {
   function importTracklist(spotifyPlaylistId) {
     // import logic here
   }
-  async function searchTracks(query, token, limit = 10) {
-    const controller = new AbortController();
+  async function searchTracks(query, token, limit = 10, signal) {
+
     try {
       const params = new URLSearchParams({
         q: query,
         type: "track",
         limit: limit,
       });
-      const res = await fetch(
-        `https://api.spotify.com/v1/search?${params}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        }
-      );
+      const res = await fetch(`https://api.spotify.com/v1/search?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal,
+      });
+
       if (!res.ok) {
         const errBody = await res.text();
         throw new Error(`Spotify search failed (${res.status})`);
@@ -433,13 +435,53 @@ function App() {
       }
     }
     return [];
-
-    console.log()
-
-
-
-
   }
+  useEffect(() => {
+    let mounted = true;
+    let controller;
+
+    if (!searchQuery || !searchQuery.trim()) {
+      setSearchResults([]);
+      setLoadingSearch(false);
+      setSearchError(null);
+      return;
+    }
+
+    const t = setTimeout(async () => {
+      controller = new AbortController();
+      setLoadingSearch(true);
+      setSearchError(null);
+
+
+      try {
+        const items = await searchTracks(searchQuery, token, 10, controller.signal);
+        if (!mounted) return;
+
+        const mapped = (items || []).map(t => ({
+          id: t.id ?? "",
+          uri: t.uri ?? "",
+          name: t.name ?? "",
+          artist: t.artists?.map(a => a.name).join(", ") ?? "",
+          image: t.album?.images?.[0].url ?? "",
+          source: "spotify",
+        }));
+        setSearchResults(mapped);
+      }
+      catch (err) {
+        setSearchError(err.message ?? 'something wrong');
+        setSearchResults([]);
+      }
+      finally {
+        if (mounted) setLoadingSearch(false);
+      }
+    }, 300)
+    return () => {
+      mounted = false;
+      clearTimeout(t);
+      controller?.abort();
+    };
+  }, [searchQuery, token]);
+
 
 
   return (
@@ -448,11 +490,13 @@ function App() {
       {token && (
         <div id="app-grid">
           <Header profileData={profileData} loadingProfile={loadingProfile} profileError={profileError} />
-          <SearchBar token={token} onQueryChange={setSearchQuery} />
+          <SearchBar onQueryChange={setSearchQuery} />
           <SearchResults
-            token={token}
-            searchTracks={searchTracks}
             query={searchQuery}
+            tracks={searchResults}
+            loading={loadingSearch}
+            error={searchError}
+          //onAddTrack={}
           />
           <Playlists
             playlists={playlists}

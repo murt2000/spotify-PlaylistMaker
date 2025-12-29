@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import './styleComponents/SearchBar.css'
 
 /* Accept `onQueryChange` prop and call it when input changes */
-function SearchBar({ token, onQueryChange }) {
+function SearchBar({ onQueryChange }) {
     const [value, setValue] = useState("");
 
     function handleChange(e) {
