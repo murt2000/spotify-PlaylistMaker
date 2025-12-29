@@ -5,7 +5,7 @@ import './styleComponents/Track.css'
 
 /* contains the induvidual track or song objects that are used as a listitem in a tracklist whitch are a listitem of the playlists component*/
 
-function Track({ trackName, artist, trackImg, isInPlaylist, addTrack, rmvTrack }) {
+function Track({ trackName, artist, trackImg, isInPlaylist, addTrack, rmvTrack, source }) {
 
     return (
         <div className="trackBox">
@@ -15,6 +15,8 @@ function Track({ trackName, artist, trackImg, isInPlaylist, addTrack, rmvTrack }
             <div className="trackText">
                 <h3 className="trackName">{trackName}</h3>
                 <h4 className="trackArtist">{artist}</h4>
+                <h4 className="trackSource">Source: {source}</h4>
+
             </div>
             {
                 isInPlaylist ?

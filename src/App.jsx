@@ -60,6 +60,7 @@ function App() {
   const [playlistsError, setPlaylistsError] = useState(null);
 
   const [expandedPlaylistId, setExpandedPlaylistId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
 
   const isLocal =
@@ -291,6 +292,7 @@ function App() {
         name: t.name ?? "",
         artist: t.artists?.map(a => a.name).join(", ") ?? "",
         image: t.album?.images?.[0].url ?? "",
+        source: "spotify",
       }));
   }
 
@@ -397,6 +399,47 @@ function App() {
     )
     );
   }
+  function exportTracklist(id) {
+    // export logic here
+  }
+  function importTracklist(spotifyPlaylistId) {
+    // import logic here
+  }
+  async function searchTracks(query, token, limit = 10) {
+    const controller = new AbortController();
+    try {
+      const params = new URLSearchParams({
+        q: query,
+        type: "track",
+        limit: limit,
+      });
+      const res = await fetch(
+        `https://api.spotify.com/v1/search?${params}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        }
+      );
+      if (!res.ok) {
+        const errBody = await res.text();
+        throw new Error(`Spotify search failed (${res.status})`);
+      }
+
+      const data = await res.json();
+      return data.tracks.items;
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        console.error("error fetching tracks", err);
+      }
+    }
+    return [];
+
+    console.log()
+
+
+
+
+  }
 
 
   return (
@@ -405,8 +448,12 @@ function App() {
       {token && (
         <div id="app-grid">
           <Header profileData={profileData} loadingProfile={loadingProfile} profileError={profileError} />
-          <SearchBar token={token} />
-          <SearchResults token={token} />
+          <SearchBar token={token} onQueryChange={setSearchQuery} />
+          <SearchResults
+            token={token}
+            searchTracks={searchTracks}
+            query={searchQuery}
+          />
           <Playlists
             playlists={playlists}
             loadingPlaylists={loadingPlaylists}

@@ -3,5 +3,6 @@ const track = {
     uri: String,
     name: String,
     artist: String,
-    image: String
+    image: String,
+    source: String,
 }

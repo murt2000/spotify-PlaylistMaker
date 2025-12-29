@@ -1,16 +1,28 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 
 import './styleComponents/SearchBar.css'
 
-/*function for a sting input -- maybe interface with the API here. */
+/* Accept `onQueryChange` prop and call it when input changes */
+function SearchBar({ token, onQueryChange }) {
+    const [value, setValue] = useState("");
 
-function SearchBar(){
+    function handleChange(e) {
+        const v = e.target.value;
+        setValue(v);
+        if (typeof onQueryChange === 'function') onQueryChange(v);
+    }
 
-    return(
+    return (
         <div id='searchbar'>
-            <input id='searchInput' type='text' placeholder="search spotify"/> 
-
+            <input
+                id='searchInput'
+                type='text'
+                placeholder="search spotify"
+                value={value}
+                onChange={handleChange}
+            />
         </div>
     )
 }
+
 export default SearchBar;
