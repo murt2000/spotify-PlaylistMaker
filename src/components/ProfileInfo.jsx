@@ -15,8 +15,7 @@ function ProfileInfo({ profileData, loadingProfile, profileError }) {
     }
     const inital = profileData.display_name?.[0] ?? profileData.id?.[0] ?? "?";
     const avatarUrl = profileData.images?.[0]?.url;
-    console.log("Profile data:", profileData);
-    console.log("Avatar URL:", avatarUrl);
+
 
     return (
         <section>

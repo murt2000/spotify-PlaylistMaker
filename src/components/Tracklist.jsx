@@ -3,13 +3,14 @@ import Track from "./Track";
 /* contains a list of track objects from track.jsx and uses them to create a list is a child of playlists
 */
 
-function Tracklist({ tracks, isInPlaylist, addTrack, rmvTrack }) {
+function Tracklist({ tracks, isInPlaylist, addTrack, rmvTrack, track }) {
 
 
 
     return (
         <div className="trackList">{tracks.map(track => (
             <Track
+                track={track}
                 key={track.id}
                 trackName={track.name}
                 artist={track.artist}

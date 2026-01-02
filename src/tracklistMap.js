@@ -4,7 +4,7 @@ const tracklist = {
     image: String,
     isOwnedbyMe: Boolean,
     source: String, // "spotify" or "local"
-    tracks: Track[],// of track.jsx objects
+    tracks: Array,// of track.jsx objects
     tracksTotal: Number,
     loaded: Boolean, // whether tracks have been fetched from spotify api yet
     nexrTrackURL: String // for spotify api pagination

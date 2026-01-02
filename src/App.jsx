@@ -234,6 +234,10 @@ function App() {
       setPlaylists([]);
       return;
     }
+    if (!profileData) {
+      console.log("Waiting for profileData before mapping playlists ownership");
+      return;
+    }
 
     const controller = new AbortController();
 
@@ -250,18 +254,26 @@ function App() {
         if (!res.ok) {
           throw new Error('spotify fetch playlists failed' + res.status);
         }
+        const userId = String(profileData?.id ?? "").toLowerCase();
+        console.log("User ID:", userId);
+
         const data = await res.json();
-        const mapped = data.items.map(tl => ({ // tl is for tracklist it is a playlist, but named tracklist in app to avoid confusion
-          id: tl.id,
-          name: tl.name,
-          image: tl.images?.[0]?.url ?? "",
-          isOwnedbyMe: tl.owner?.id === profileData?.id,
-          source: "spotify", // for imported playlist always spotify for created local
-          tracks: [],
-          tracksTotal: tl.tracks.total ?? 0,
-          loaded: false,
-          nextTracksUrl: null,
-        }))
+        const mapped = data.items.map(tl => {
+          const ownerId = String(tl.owner?.id ?? "").toLowerCase();
+          console.log("Playlist owner ID:", ownerId);
+          return {
+            id: tl.id,
+            name: tl.name,
+            image: tl.images?.[0]?.url ?? "",
+            isOwnedbyMe: ownerId !== "" && ownerId === userId,
+            source: "spotify", // for imported playlist always spotify for created it is always local
+            tracks: [],
+            tracksTotal: tl.tracks.total ?? 0,
+            loaded: false,
+            nextTracksUrl: tl.tracks?.next ?? null,
+          }
+
+        });
         setPlaylists(mapped);
       }
       catch (err) {
@@ -273,7 +285,7 @@ function App() {
       finally { setLoadingPlaylists(false); }
     })();
     return () => controller.abort();
-  }, [token]);
+  }, [token, profileData]);
 
 
 
@@ -342,7 +354,7 @@ function App() {
       }
     }
     finally {
-      console.log(playlists)
+      controller.abort();
 
     }
   }
@@ -391,6 +403,7 @@ function App() {
     setTracklists(prev =>
       prev.map(tl => ({ ...tl, expanded: false })).concat(newList)
     )
+
   }
   function removeTracklist(id) {
     setTracklists(prev => prev.filter(tl => tl.id !== id));
@@ -405,6 +418,14 @@ function App() {
   }
   function exportTracklist(id) {
     // export logic here
+
+    // check if playlist is new or exsists
+
+    // if preowned modify that playlist on spotify with new name and tracks
+
+    // if a public playlist make new private playlist with same name and tracks and export that.
+
+    // if it is a new playlist export to spotify as a new playlist with tracks
   }
   function importTracklist(spotifyPlaylistId) {
     // import logic here
@@ -482,7 +503,76 @@ function App() {
     };
   }, [searchQuery, token]);
 
+  function addTrack(track) { // add a selected track from search results to the expanded playlist
+    const newTrack = {
+      id: track.id ?? "",
+      uri: track.uri ?? "",
+      name: track.name ?? "",
+      artist: track.artist,
+      image: track.image ?? "",
+      source: "added",
+    };
 
+
+    if (!expandedPlaylistId) {
+      console.warn("No expanded playlist to add track to.");
+      return;
+    }
+    // we want to add the track to the playlist === expandedPlaylistId
+    setPlaylists(prev =>
+
+      prev.map(tl => {
+        if (tl.id !== expandedPlaylistId)
+          return tl;
+
+        const trackInPlaylist = (tl.tracks ?? []).some(t => t.id === newTrack.id);
+        if (trackInPlaylist) {
+          return tl;
+        }
+        const newTracks = [...tl.tracks ?? [], newTrack];
+        const newTotal = (tl.tracksTotal ?? tl.tracks?.length ?? 0) + 1
+        console.log(tl)
+        return {
+
+          ...tl,
+          tracks: newTracks,
+          tracksTotal: newTotal,
+
+        };
+      }
+
+      )
+    );
+
+    console.log(playlists[0])
+  }
+  function rmvTrack(track) { // remove a selected track from the expanded playlist
+    console.log(track);
+    console.log("rmv");
+
+    // we want to remove the track from the playlist
+    setPlaylists(prev =>
+
+      prev.map(tl => {
+        const trackInPlaylist = (tl.tracks ?? []).some(t => t.id === track.id);
+        if (!trackInPlaylist) {
+          return tl;
+        }
+        const newTracks = (tl.tracks ?? []).filter(t => t.id !== track.id);
+        const newTotal = (tl.tracksTotal ?? tl.tracks?.length ?? 0) - 1
+        return {
+          ...tl,
+          tracks: newTracks,
+          tracksTotal: newTotal,
+
+        };
+      }
+
+      )
+    );
+
+
+  }
 
   return (
     <>
@@ -496,6 +586,7 @@ function App() {
             tracks={searchResults}
             loading={loadingSearch}
             error={searchError}
+            addTrack={addTrack}
           //onAddTrack={}
           />
           <Playlists
@@ -503,6 +594,8 @@ function App() {
             loadingPlaylists={loadingPlaylists}
             playlistsError={playlistsError}
             onToggleTracklist={toggleTracklist}
+
+            rmvTrack={rmvTrack}
             expandedPlaylistId={expandedPlaylistId}
             renameTracklist={renameTracklist}
             loadMore={loadMore}

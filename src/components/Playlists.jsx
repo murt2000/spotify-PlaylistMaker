@@ -17,7 +17,7 @@ export button clicks gives a pop up with options export import on export reload 
 
 
 
-function Playlists({ playlists, loadingPlaylists, loadMore, playlistsError, onToggleTracklist, expandedPlaylistId, renameTracklist }) {
+function Playlists({ playlists, loadingPlaylists, loadMore, playlistsError, onToggleTracklist, expandedPlaylistId, renameTracklist, rmvTrack }) {
 
   const [editingId, setEditingId] = useState(null);
   if (loadingPlaylists) {
@@ -54,8 +54,7 @@ function Playlists({ playlists, loadingPlaylists, loadMore, playlistsError, onTo
   }
 
 
-  console.log("playlists:", playlists);
-  console.log("first playlist:", playlists?.[0]);
+
   return (
     <div id='Playlists'>
       <h2>Your playlists</h2>
@@ -111,7 +110,9 @@ function Playlists({ playlists, loadingPlaylists, loadMore, playlistsError, onTo
             )}
             {isExpanded && (
               <div className="tracklistContainer">
-                <Tracklist tracks={tl.tracks ?? []} isInPlaylist={true} addTrack={() => { }} rmvTrack={() => { }} />
+                <Tracklist tracks={tl.tracks ?? []}
+                  isInPlaylist={true}
+                  rmvTrack={rmvTrack} />
                 <button id="export">Export</button>
                 <button id="load" onClick={() => loadMore(tl.id)}>Load</button>
               </div>

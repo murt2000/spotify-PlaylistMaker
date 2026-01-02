@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Tracklist from "./Tracklist";
 
-function SearchResults({ tracks, loading, query, error }) {
+function SearchResults({ tracks, loading, query, error, addTrack }) {
 
 
     return (
@@ -12,8 +12,8 @@ function SearchResults({ tracks, loading, query, error }) {
             <Tracklist
                 tracks={tracks || []}
                 isInPlaylist={false}
-                addTrack={() => console.log('track added')}
-                rmvTrack={() => console.log('track removed')}
+                addTrack={addTrack}
+
             />
         </div>
     );

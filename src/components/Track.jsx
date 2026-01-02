@@ -5,7 +5,7 @@ import './styleComponents/Track.css'
 
 /* contains the induvidual track or song objects that are used as a listitem in a tracklist whitch are a listitem of the playlists component*/
 
-function Track({ trackName, artist, trackImg, isInPlaylist, addTrack, rmvTrack, source }) {
+function Track({ track, trackName, artist, trackImg, isInPlaylist, addTrack, rmvTrack, source }) {
 
     return (
         <div className="trackBox">
@@ -21,8 +21,8 @@ function Track({ trackName, artist, trackImg, isInPlaylist, addTrack, rmvTrack, 
             {
                 isInPlaylist ?
                     (
-                        <button className="trackButton" onClick={() => rmvTrack(trackName)}>-</button>
-                    ) : (<button className="trackButton" onClick={() => addTrack(trackName)}>+</button>
+                        <button className="trackButton" onClick={() => rmvTrack(track)}>-</button>
+                    ) : (<button className="trackButton" onClick={() => addTrack(track)}>+</button>
                     )}
         </div>
     )
