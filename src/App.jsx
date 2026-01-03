@@ -210,7 +210,7 @@ function App() {
         });
 
         if (!response.ok) {
-          throw new Error(`Spotify /profildata failed: ${response.status}`);
+          throw new Error(`Spotify /profile failed: ${response.status}`);
         }
 
         const data = await response.json();
@@ -254,12 +254,12 @@ function App() {
         if (!res.ok) {
           throw new Error('spotify fetch playlists failed' + res.status);
         }
-        const userId = String(profileData?.id ?? "").toLowerCase();
+        const userId = String(profileData?.id ?? "");
         console.log("User ID:", userId);
 
         const data = await res.json();
         const mapped = data.items.map(tl => {
-          const ownerId = String(tl.owner?.id ?? "").toLowerCase();
+          const ownerId = String(tl.owner?.id ?? "");
           console.log("Playlist owner ID:", ownerId);
           return {
             id: tl.id,
@@ -416,17 +416,184 @@ function App() {
     )
     );
   }
-  function exportTracklist(id) {
-    // export logic here
+  async function exportTracklist(playlist, token, profileData) {
+    // if there are more than one hundred tracks we need to split into multiple requests
+    // recives playlists and decides withc sub function to use
+    // after export is done we do exit logic here if requierd
+    if (!token) {
+      console.error("No token provided for exportTracklist");
+      return
+    }
+    if (!profileData) {
+      console.error("No profileData provided for exportTracklist");
+      return
+    }
 
-    // check if playlist is new or exsists
+    if (playlist.source === "local" || !playlist.isOwnedbyMe) {
+      return await exportTracklistAsNew(playlist, token, profileData);
+    } else {
 
-    // if preowned modify that playlist on spotify with new name and tracks
-
-    // if a public playlist make new private playlist with same name and tracks and export that.
-
-    // if it is a new playlist export to spotify as a new playlist with tracks
+      return await exportTracklistModExisting(playlist, token, profileData);
+    }
   }
+  async function exportTracklistAsNew(playlist, token, profileData) {
+    // Used for localy created playlsit as well as playlists not belonging to the user
+    const user_id = String(profileData?.id ?? "");
+    if (!user_id) {
+      console.error("No user ID found in profileData for exportTracklistAsNew");
+      return;
+    }
+    const body = JSON.stringify({
+      name: playlist.name ?? "New Playlist",
+      public: false,
+      collaborative: false,
+      description: "Created with the Spotify Playlist Maker" // add URl 
+    });
+    let spotifyPlaylistId = null;
+    let spotifyPlaylistUrl = "";
+
+    try {
+      const res = await fetch(`https://api.spotify.com/v1/users/${encodeURIComponent(user_id)}/playlists`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }, body: body,
+      });
+      if (!res.ok) {
+        const errBody = await res.text();
+        throw new Error(`Spotify create playlist failed (${res.status}): ${errBody}`);
+      }
+      const data = await res.json();
+      spotifyPlaylistId = data.id;
+      spotifyPlaylistUrl = data.external_urls?.spotify ?? "";
+      console.log("Created new Spotify playlist with ID:", spotifyPlaylistId);
+    }
+    catch (err) {
+      console.error("Error exporting tracklist as new playlist:", err);
+      return { ok: false, error: err.message ?? 'unknown error' };
+    }
+
+    // add tracks to the playlist in chunks of 100
+
+    const trackUris = (playlist.tracks ?? []).map(t => t?.uri).filter(Boolean);
+    if (trackUris.length === 0) {
+      return { ok: true, mode: "created", playlistId: spotifyPlaylistId, playlistUrl: spotifyPlaylistUrl, tracksExported: 0 };
+    }
+    try {
+      const chunkSize = 100;
+
+      const totaluris = trackUris.length
+
+      for (let i = 0; i < totaluris; i += chunkSize) {
+        const uris = trackUris.slice(i, i + chunkSize);
+
+
+        if (uris.length === 0) continue;
+
+        const trackBody = JSON.stringify({ uris: uris });
+
+        const res = await fetch(`https://api.spotify.com/v1/playlists/${spotifyPlaylistId}/tracks`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: trackBody,
+        });
+        if (!res.ok) {
+          const errBody = await res.text();
+          throw new Error(`Spotify add tracks failed (${res.status}): ${errBody}`);
+        }
+      }
+    }
+    catch (err) {
+      console.error("Error adding tracks to new playlist:", err);
+      return { ok: false, playlistId: spotifyPlaylistId, error: err.message ?? 'unknown error' };
+    }
+    return {
+      ok: true,
+      mode: "created",
+      playlistId: spotifyPlaylistId,
+      playlistUrl: spotifyPlaylistUrl,
+      tracksExported: trackUris.length,
+    };
+  }
+
+
+
+  async function exportTracklistModExisting(playlist, token) {
+    // if preowned modify that playlist on spotify with new name and tracks
+    // -use a diffrent function for logic
+    if (!playlist.id) {
+      console.error("No playlist ID provided for exportTracklistModExisting");
+      return;
+    }
+    if (playlist.source !== "spotify" || !playlist.isOwnedbyMe) {
+      return { ok: false, error: "playlist not owned by user or not from spotify" };
+    }
+    if (!token) {
+      console.error("no token provided for exportTracklistModExisting");
+      return;
+    }
+    if (!profileData) {
+      console.error("no profileData provided for exportTracklistModExisting");
+      return;
+    }
+    const trackUris = (playlist.tracks ?? []).map(t => t?.uri).filter(Boolean);
+    const chunkSize = 100;
+    const firstChunk = trackUris.slice(0, chunkSize);
+    const remainingChunks = [];
+    for (let i = chunkSize; i < trackUris.length; i += chunkSize) {
+      remainingChunks.push(trackUris.slice(i, i + chunkSize));
+    }
+    try {
+      const res = await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ uris: firstChunk }),
+      });
+      if (!res.ok) {
+        const errBody = await res.text();
+        throw new Error(`Spotify replace tracks failed (${res.status}): ${errBody}`);
+      }
+    }
+    catch (err) {
+      console.error("Error replacing tracks in existing playlist:", err);
+      return { ok: false, error: err.message ?? 'unknown error' };
+    }
+    try {
+      for (const uris of remainingChunks) {
+        const res = await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ uris: uris }),
+        });
+        if (!res.ok) {
+          const errBody = await res.text();
+          throw new Error(`Spotify add tracks failed (${res.status}): ${errBody}`);
+        }
+      }
+    }
+    catch (err) {
+      console.error("Error replacing tracks in existing playlist:", err);
+      return { ok: false, error: err.message ?? 'unknown error' };
+    }
+    return {
+      ok: true,
+      mode: "updated",
+      playlistId: playlist.id,
+      tracksExported: trackUris.length,
+    }
+
+  }
+
   function importTracklist(spotifyPlaylistId) {
     // import logic here
   }
