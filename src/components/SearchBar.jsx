@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 
-import './styleComponents/SearchBar.css'
+import './styleComponents/SearchBar.css';
 
 /* Accept `onQueryChange` prop and call it when input changes */
-function SearchBar({ onQueryChange }) {
+function SearchBar({ onQueryChange, ...props }) {
+    const { onImportRequest } = props;
     const [value, setValue] = useState("");
 
     function handleChange(e) {
@@ -21,6 +22,7 @@ function SearchBar({ onQueryChange }) {
                 value={value}
                 onChange={handleChange}
             />
+            <button id="import" type="button" onClick={() => onImportRequest?.(true)} >Import</button>
         </div>
     )
 }
