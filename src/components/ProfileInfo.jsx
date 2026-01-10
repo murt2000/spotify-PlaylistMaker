@@ -2,7 +2,7 @@ import React from 'react';
 import { useEffect } from 'react';
 import "./styleComponents/ProfileInfo.css";
 
-function ProfileInfo({ profileData, loadingProfile, profileError }) {
+function ProfileInfo({ profileData, loadingProfile, profileError, handleLogout }) {
 
     if (loadingProfile) {
         return <div>Loading profile...</div>;
@@ -19,6 +19,10 @@ function ProfileInfo({ profileData, loadingProfile, profileError }) {
 
     return (
         <section>
+
+            <button id='logout' onClick={() => handleLogout()}>
+                Log Out
+            </button>
 
             <div id="profileInfo">
                 <p id="displayName" className='pInfo'>

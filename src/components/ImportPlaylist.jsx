@@ -89,7 +89,7 @@ function ImportPlaylist({ onClose, crtBlank, myPlaylists, loadingMyPlaylists, my
                 <input
                     id='searchInput'
                     type='text'
-                    placeholder="search spotify"
+                    placeholder="Search Spotify"
                     value={importQuery}
                     onChange={handleChange}
                 />

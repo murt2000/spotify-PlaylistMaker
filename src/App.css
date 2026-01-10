@@ -47,3 +47,20 @@
   padding: 1rem;
 
 }
+
+button {
+  padding: 0.5rem;
+  color: var(--button-text);
+  background-color: var(--button-bg);
+  border: solid 1px var(--button-text);
+
+  box-shadow: none;
+}
+
+input {
+  color: var(--button-text);
+  background-color: var(--button-bg);
+  border: solid 1px var(--button-text);
+  border-radius: 40px;
+  box-shadow: none;
+}

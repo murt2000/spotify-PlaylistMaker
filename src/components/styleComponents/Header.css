@@ -14,7 +14,7 @@ header {
     align-items: center;
 }
 
-.hbutton {
+#hbutton {
     cursor: pointer;
     width: 2.5rem;
     height: 2.5rem;

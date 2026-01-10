@@ -18,7 +18,7 @@ function SearchBar({ onQueryChange, ...props }) {
             <input
                 id='searchInput'
                 type='text'
-                placeholder="search spotify"
+                placeholder="Search Spotify"
                 value={value}
                 onChange={handleChange}
             />

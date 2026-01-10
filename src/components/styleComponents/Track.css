@@ -70,6 +70,7 @@
     height: 3rem;
     width: 3rem;
     cursor: pointer;
+    box-shadow: none;
 }
 
 .trackSource {

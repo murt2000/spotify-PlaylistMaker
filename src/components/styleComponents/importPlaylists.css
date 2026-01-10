@@ -37,6 +37,7 @@
 .importButton {
     padding: 0.15rem;
     margin: 0.5rem 0 0 0.5rem;
+    border-radius: 0.5rem;
 }
 
 #blankPl {

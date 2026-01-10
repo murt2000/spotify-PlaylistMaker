@@ -25,9 +25,10 @@
   --bg: #ffffff;
   --text: #213547;
   --card: #f6f6f6;
-  --border: rgba(0, 0, 0, 0.12);
+  --button-text: rgba(0, 0, 0, 0.12);
   --button-bg: #f0f0f0;
   --button-text: #213547;
+  --border: black;
 }
 
 

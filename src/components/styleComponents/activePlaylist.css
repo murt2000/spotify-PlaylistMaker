@@ -4,15 +4,6 @@
     padding: 1rem;
 }
 
-.Pl-header {
-    display: flex;
-    flex-direction: row;
-}
-
-.edt-btn {
-    margin: 1rem 0 0 1rem;
-    height: 2rem;
-}
 
 .playlist-header {
     display: flex;
@@ -21,5 +12,5 @@
 
 .button {
     margin-left: 1rem;
-    padding: 0.15rem;
+    border-radius: 0.5rem;
 }

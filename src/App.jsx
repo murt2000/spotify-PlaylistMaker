@@ -10,7 +10,7 @@ import LoginOverlay from "./components/LoginOverlay.jsx";
 import "./App.css";
 
 const CLIENT_ID = "005ca1c419964ede830a5ab4944221fe";
-const SCOPES = "playlist-modify-private playlist-modify-public user-read-private user-read-email";
+const SCOPES = "playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public user-read-private user-read-email";
 
 // --- PKCE helpers ------------------------------------------------------------
 
@@ -50,6 +50,7 @@ async function createCodeChallenge(verifier) {
 // --- App ---------------------------------------------------------------------
 
 function App() {
+  console.log(SCOPES)
   const [token, setToken] = useState(null);
 
   const [profileData, setProfileData] = useState(null);
@@ -554,6 +555,39 @@ function App() {
     tracksForActivePlaylist(pl)
   }
 
+  function handleLogout() {
+    // Clear auth artifacts
+    localStorage.removeItem("spotify_access_token");
+    localStorage.removeItem("spotify_token_expires_at");
+    localStorage.removeItem("spotify_code_verifier");
+
+    // (Optional) clear anything else your app persists
+    // localStorage.removeItem("theme"); // probably DON'T clear theme
+
+    // Reset app state
+    setToken(null);
+
+    setProfileData(null);
+    setProfileError(null);
+    setLoadingProfile(false);
+
+    setMyPlaylists([]);
+    setImportPlaylists([]);
+    setActivePlaylist(createBlankPlaylist());
+
+    setSearchQuery("");
+    setImportQuery("");
+    setSearchResults([]);
+    setSearchError(null);
+    setLoadingSearch(false);
+
+    setShowImportPlaylist(false);
+
+    // Optional: also clean any leftover ?code or ?error from the URL
+    const cleanUrl = window.location.origin + window.location.pathname;
+    window.history.replaceState({}, "", cleanUrl);
+  }
+
   function renameTracklist(newName) {    // gets an id and new name from playlist component and changes it in state
     setActivePlaylist(prev => {
       return { ...prev, name: newName };
@@ -885,7 +919,7 @@ function App() {
       {!token && <LoginOverlay onLogin={handleLogin} />}
       {token && (
         <div id="app-grid">
-          <Header profileData={profileData} loadingProfile={loadingProfile} profileError={profileError} toggleTheme={toggleTheme} theme={theme} />
+          <Header profileData={profileData} loadingProfile={loadingProfile} profileError={profileError} toggleTheme={toggleTheme} theme={theme} handleLogout={handleLogout} />
           {showImportPlaylist ? (
             <ImportPlaylist
               onClose={() => setShowImportPlaylist(false)}
