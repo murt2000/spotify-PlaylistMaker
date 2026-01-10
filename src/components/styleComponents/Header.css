@@ -1,26 +1,46 @@
-header{
+header {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
 
     padding: 1rem;
-    color: white;
+    color: var(--text);
 }
 
-#titleAndButton{
+#titleAndButton {
     display: flex;
     flex-direction: row;
     align-items: center;
 }
 
-.hButton{
+.hbutton {
     cursor: pointer;
-    
-    border-radius: 25%;
-    border: none;
-    background-color: grey;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--text);
+
+    overflow: hidden;
+
+    background-color: white;
+
+
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     padding: 0.25rem;
     margin: 1rem;
+
+
+}
+
+.day-night {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    display: block;
+
 }

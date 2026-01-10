@@ -4,7 +4,7 @@ import SearchBar from "./components/SearchBar.jsx";
 import Header from "./components/Header.jsx";
 import SearchResults from "./components/SearchResults.jsx";
 import ActivePlaylist from "./components/ActivePlaylist.jsx";
-import ImportPlaylist from "./components/ImportPLaylist.jsx";
+import ImportPlaylist from "./components/ImportPlaylist.jsx";
 import LoginOverlay from "./components/LoginOverlay.jsx";
 
 import "./App.css";
@@ -60,7 +60,11 @@ function App() {
   const [loadingMyPlaylists, setLoadingMyPlaylists] = useState(false);
   const [myPlaylistsError, setMyPlaylistsError] = useState(null);
 
+
+  const [importPlaylist, setImportPlaylists] = useState([]);
   const [activePlaylist, setActivePlaylist] = useState(null);
+
+
 
   const [searchQuery, setSearchQuery] = useState("");
   const [importQuery, setImportQuery] = useState("");
@@ -70,6 +74,14 @@ function App() {
   const [searchError, setSearchError] = useState(null);
 
   const [showImportPlaylist, setShowImportPlaylist] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "light" || saved === "dark") return saved;
+    return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  });
+
+
+
 
   const isLocal =
     window.location.hostname === "localhost" ||
@@ -192,6 +204,16 @@ function App() {
     handleCallback();
   }, [redirectUri]);
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme; // sets <html data-theme="dark">
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  function toggleTheme() {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  }
+
+
   // Fetch profile data logic here
 
   useEffect(() => {
@@ -286,6 +308,7 @@ function App() {
         }
 
         setMyPlaylists(all);
+        setImportPlaylists(all);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Error fetching playlists:", err);
@@ -309,7 +332,7 @@ function App() {
 
     // If query is empty -> show my playlists again
     if (!q) {
-      setMyPlaylists(myPlaylists);
+      setImportPlaylists(myPlaylists);
       return;
     }
 
@@ -323,7 +346,7 @@ function App() {
         const params = new URLSearchParams({
           q,
           type: "playlist",
-          limit: "20",
+          limit: "50",
         });
 
         const res = await fetch(`https://api.spotify.com/v1/search?${params.toString()}`, {
@@ -351,12 +374,12 @@ function App() {
             nextTracksUrl: null,
           }));
 
-        setMyPlaylists(mapped);
+        setImportPlaylists(mapped);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Error searching playlists:", err);
           setMyPlaylistsError(err.message ?? "Failed to search playlists");
-          setMyPlaylists([]);
+          setImportPlaylists([]);
         }
       } finally {
         setLoadingMyPlaylists(false);
@@ -367,10 +390,12 @@ function App() {
       clearTimeout(t);
       controller.abort();
     };
-  }, [importQuery, showImportPlaylist, token]);
+  }, [importQuery, showImportPlaylist, token, myPlaylists]);
 
 
-
+  useEffect(() => {
+    setActivePlaylist(createBlankPlaylist());
+  }, []);
 
   function mapTracks(items = []) {
     return items.map(i => i.track)
@@ -384,73 +409,128 @@ function App() {
         source: "spotify",
       }));
   }
-
-  async function fetchTracks(playlist) {
+  // we split fetch tracks to 3 parts 1 fetching logic 2 logic for actual playlist 3 logic for preview
+  async function fetchTracks({ id, signal, onChunk }) {
 
     //further implementation needed
     console.log("fetchTracks fired")
-    const id = playlist?.id
+    console.log(id)
     if (!id) {
       console.error("no playlist in state")
-      return;
+      return [];
     }
-    const controller = new AbortController();
-    try {
-      const collected = [];
-      let url = `https://api.spotify.com/v1/playlists/${id}/tracks?limit=100`;
-      let lastData = null;
 
-      while (url) {
-        const res = await fetch(url, {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        });
 
-        if (!res.ok) {
-          const errBody = await res.text();
-          throw new Error(`Spotify playlist tracks failed (${res.status}): ${errBody}`);
-        }
+    const collected = [];
+    let url = `https://api.spotify.com/v1/playlists/${id}/tracks?limit=100`;
 
-        const data = await res.json();
-        lastData = data;
 
-        const chunk = mapTracks(data.items);
-        collected.push(...chunk);
+    while (url) {
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal,
+      });
 
-        // update interim state so UI can show progress while fetching
-        setActivePlaylist(prev => prev && prev.id === id ? {
-          ...prev,
-          tracks: collected.slice(),
-          nextTracksUrl: data.next ?? null,
-          tracksTotal: data.total ?? prev.tracksTotal ?? collected.length,
-        } : prev);
-
-        url = data.next;
+      if (!res.ok) {
+        const errBody = await res.text();
+        throw new Error(`Spotify playlist tracks failed (${res.status}): ${errBody}`);
       }
 
-      // final state update (ensure totals are correct)
-      setActivePlaylist(prev => prev && prev.id === id ? {
-        ...prev,
-        tracks: collected,
-        nextTracksUrl: lastData?.next ?? null,
-        tracksTotal: lastData?.total ?? prev.tracksTotal ?? collected.length,
-      } : prev);
+      const data = await res.json();
 
+
+      const chunk = mapTracks(data.items);
+      collected.push(...chunk);
+
+      onChunk?.(collected.slice(), {
+        next: data.next ?? null,
+        total: data.total ?? collected.length,
+      });
+
+
+      url = data.next;
+    }
+    return collected;
+
+
+
+  }
+
+  async function tracksForActivePlaylist(playlist) {
+
+    const id = playlist?.id;
+    if (!id) return;
+
+    const controller = new AbortController();
+    try {
+
+      await fetchTracks({
+        id,
+        signal: controller.signal,
+        onChunk: (tracks, meta) => {
+          setActivePlaylist((prev) =>
+            prev && prev.id === id
+              ? {
+                ...prev,
+                tracks,
+                nextTracksUrl: meta.next,
+                tracksTotal: meta.total,
+              }
+              : prev
+          );
+        },
+      });
     } catch (err) {
       if (err.name !== "AbortError") {
         console.error("error fetching tracks", err)
       }
-    } finally {
+    }
+
+    finally {
       controller.abort();
     }
-    // fetched all pages and stored tracks in state
+
+  }
+  async function tracksForPreview(playlist, { signal, onChunk }) {
+
+    const id = playlist.id;
+    const finalSignal = signal ?? controller.signal;
+    if (!id) return;
+
+    const controller = new AbortController();
+    try {
+
+      const tracks = await fetchTracks({
+        id,
+        signal: finalSignal,
+        onChunk,
+      });
+
+
+      return tracks;
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        console.error("error fetching tracks", err)
+      }
+    }
+
+    finally {
+      controller.abort();
+    }
   }
 
-  function crtBlank() { //needs more logic and maybe properties spotify URI id etc 
+  function crtBlank() { //needs more logic and maybe properties spotify URI id etc
+
+    setActivePlaylist(createBlankPlaylist());
+    setImportQuery("")
+    setShowImportPlaylist(false);
+
+  }
+  function createBlankPlaylist() {
     const newList = {
       id: null,
       //Date.now().toString()
-      name: `new Playlist`,
+      name: `New Playlist`,
       image: "",
       editingName: false,
       tracks: [],
@@ -459,10 +539,7 @@ function App() {
       spotifyPlaylistId: null,
       isOwnedByMe: true // set to false if this fucks the export
     };
-    setActivePlaylist(newList);
-    setImportQuery("")
-    setShowImportPlaylist(false);
-
+    return newList;
   }
   function selectPlaylist(pl) {
     console.log(pl);
@@ -474,13 +551,27 @@ function App() {
     });
     setImportQuery("");
     setShowImportPlaylist(false);
-    fetchTracks(pl)
+    tracksForActivePlaylist(pl)
   }
 
   function renameTracklist(newName) {    // gets an id and new name from playlist component and changes it in state
     setActivePlaylist(prev => {
       return { ...prev, name: newName };
     });
+  }
+
+  function createAfterExportPlaylist() {
+    return {
+      id: null,
+      name: "Export successful",
+      image: "",
+      editingName: false,
+      tracks: [],
+      tracksTotal: 0,
+      source: "local",
+      spotifyPlaylistId: null,
+      isOwnedByMe: true,
+    };
   }
 
   async function exportTracklist() {
@@ -499,13 +590,20 @@ function App() {
       console.error("No playlist provided for exportTracklist");
       return;
     }
+    let result;
 
     console.log("export fired")
     if (playlist.source === "local" || !playlist.isOwnedByMe) {
-      return await exportTracklistAsNew();
+      result = await exportTracklistAsNew();
     } else {
-      return await exportTracklistModExisting();
+      result = await exportTracklistModExisting();
     }
+    if (result?.ok) {
+      setActivePlaylist(createAfterExportPlaylist());
+    }
+    return result;
+
+
   }
   async function exportTracklistAsNew() {
     const playlist = activePlaylist;
@@ -704,6 +802,7 @@ function App() {
     }
     return [];
   }
+  //search tracks
   useEffect(() => {
     let mounted = true;
     let controller;
@@ -786,11 +885,11 @@ function App() {
       {!token && <LoginOverlay onLogin={handleLogin} />}
       {token && (
         <div id="app-grid">
-          <Header profileData={profileData} loadingProfile={loadingProfile} profileError={profileError} />
+          <Header profileData={profileData} loadingProfile={loadingProfile} profileError={profileError} toggleTheme={toggleTheme} theme={theme} />
           {showImportPlaylist ? (
             <ImportPlaylist
               onClose={() => setShowImportPlaylist(false)}
-              myPlaylists={myPlaylists}
+              myPlaylists={importPlaylist}
               loadingMyPlaylists={loadingMyPlaylists}
               myPlaylistsError={myPlaylistsError}
               selectPlaylist={selectPlaylist}
@@ -798,6 +897,8 @@ function App() {
               crtBlank={crtBlank}
               importQuery={importQuery}
               onImportQueryChange={setImportQuery}
+              tracksForPreview={tracksForPreview}
+
             />
           ) : (
             <>
@@ -815,6 +916,8 @@ function App() {
                 rmvTrack={rmvTrack}
                 exportTracklist={exportTracklist}
                 renameTracklist={renameTracklist}
+                crtBlank={crtBlank}
+                createBlankPlaylist={createBlankPlaylist}
               />
             </>
           )}

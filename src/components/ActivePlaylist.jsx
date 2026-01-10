@@ -2,12 +2,12 @@ import React, { useState, useEffect } from "react";
 import Tracklist from "./Tracklist";
 import Track from "./Track";
 
-import './styleComponents/Playlist.css'
+import './styleComponents/activePlaylist.css'
 
 
 
 
-function activePlaylist({ activePlaylist, renameTracklist, rmvTrack, exportTracklist }) {
+function activePlaylist({ activePlaylist, renameTracklist, rmvTrack, exportTracklist, crtBlank, createBlankPlaylist }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(activePlaylist?.name ?? "");
 
@@ -34,10 +34,6 @@ function activePlaylist({ activePlaylist, renameTracklist, rmvTrack, exportTrack
     setEditName(activePlaylist?.name ?? "");
     setIsEditing(false);
   }
-  useEffect(() => {
-    // Initialize with a blank playlist so UI always has a valid target
-    crtBlank();
-  }, []);
 
   return (
     <div id="playlist">

@@ -3,7 +3,7 @@ import Track from "./Track";
 /* contains a list of track objects from track.jsx and uses them to create a list is a child of playlists
 */
 
-function Tracklist({ tracks, isInPlaylist, addTrack, rmvTrack, track }) {
+function Tracklist({ tracks, isInPlaylist, addTrack, rmvTrack, track, showButtons = true }) {
 
 
 
@@ -19,6 +19,7 @@ function Tracklist({ tracks, isInPlaylist, addTrack, rmvTrack, track }) {
                 source={track.source}
                 addTrack={addTrack}
                 rmvTrack={rmvTrack}
+                showButtons={showButtons}
             />))}
 
         </div>

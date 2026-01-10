@@ -1,3 +1,44 @@
-#searchInput {
-    width: 25%;
+#big-box {
+    display: grid;
+
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    width: 100%;
+    height: auto;
+    grid-row: 2;
+    grid-column: 1 / -1;
+    align-items: start;
+    justify-items: center;
+
+}
+
+.search-box {
+    grid-column: 1;
+    grid-row: 1;
+
+    width: 80%;
+
+}
+
+#litsOfPlaylists {
+    padding: 1rem;
+
+    border: solid var(--border) 2px;
+    border-radius: 24px;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 80%;
+    margin: 1rem 0 0 0;
+
+
+
+}
+
+.importButton {
+    padding: 0.15rem;
+    margin: 0.5rem 0 0 0.5rem;
+}
+
+#blankPl {
+    margin: 0;
 }
