@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   base: "/spotify-PlaylistMaker/",
   server: {
-    host: "127.0.0.1", // <-- important
-    port: 5173,        // <-- important
+    host: "127.0.0.1",
+    port: 5173,
   },
 });
