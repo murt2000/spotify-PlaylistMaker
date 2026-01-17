@@ -1,8 +1,8 @@
 import React from "react";
 import "./styleComponents/Header.css";
 import ProfileInfo from "./ProfileInfo.jsx";
-import dayIcon from "./assets/day-mode.png";
-import moonIcon from "./assets/moon.png";
+import dayIcon from "../assets/day-mode.png";
+import moonIcon from "../assets/moon.png";
 
 /*
 Header continaing the website title and a night day button.
