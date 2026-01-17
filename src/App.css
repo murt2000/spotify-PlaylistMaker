@@ -6,7 +6,7 @@
 }
 
 #app-grid {
-  height: 100%;
+  min-height: 100vh;
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto 1fr;
@@ -47,6 +47,8 @@
   padding: 1rem;
 
 }
+
+
 
 button {
   padding: 0.5rem;
